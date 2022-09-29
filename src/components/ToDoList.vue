@@ -9,16 +9,16 @@
             <input id="toggle-all" class="toggle-all" type="checkbox" v-model="allDone" />
             <label for="toggle-all"></label>
             <ul class="todo-list">
-                <li :class="{ completed: missioncatch }">
+                <li :class="{ completed: missioncatch.success }">
                     <div class=" view">
                         <div class="view">
-                            <label>每日任務：完成Poker遊戲</label>
+                            <label>每日任務：完成Poker遊戲配對2次</label>
                         </div>
                     </div>
                 </li>
                 <li v-for="todo in filteredTodos" class="todo" :key="todo.id"
                     :class="{ completed: todo.completed, editing: todo == editedTodo }">
-                    <div class="view" :class="{ 'completed': missioncatch }">
+                    <div class="view" >
                         <input class=" toggle" type="checkbox" v-model="todo.completed" />
                         <label @dblclick="editTodo(todo)">{{ todo.title }}</label>
                         <button class="destroy" @click="removeTodo(todo)"></button>
@@ -61,13 +61,31 @@ const todoStorage = {
            todo.id = index;
         });
         todoStorage.uid = todos.length;
-        
         return todos;
     },
     save: (todos) => {
         return localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+        
     }
 };
+const MISSION_KEY = "mission-vuejs-3.0";
+const missionStorage = {
+    fetch: () => {
+        const mission = JSON.parse(localStorage.getItem(MISSION_KEY));
+        if(mission == null){
+            const mission = JSON.parse(`{\"success\":false,\"time\":0}`)
+            return mission;
+        }
+       
+        return mission;
+        
+    },
+    save: (missioncatch) => {
+        return localStorage.setItem(MISSION_KEY, JSON.stringify(missioncatch));
+
+    }
+};
+
 // visibility filters
 const filters = {
     all: (todos) => todos,
@@ -159,33 +177,59 @@ const vTodoFocus = {
         }
     }
 }
+//定義每日任務參數
+const missioncatch = ref({
+    success: false,
+    time: 0,
+})
 //接收emitter方法
 const emitter = inject("emitter")
-let missioncatch = ref(false)
 emitter.on('missionvalue', (data) => {
-    missioncatch.value = data
+    missioncatch.value.success = data
+    const date = new Date();
+    missioncatch.value.time = date.getTime()
 })
+
+//check mission refresh
+const checkDate = () => {
+    const today = new Date();
+    let milliseconds_Time_day = Math.trunc((today.getTime() - missioncatch.value.time) / (1000 * 3600 * 24));
+    if (milliseconds_Time_day >= 1){
+        missioncatch.value.success = false
+        console.log('每日任務重置')
+    }
+}
+
 onMounted(
     () =>  {
         console.log('onMounted...')
         todos.value = todoStorage.fetch()
         window.addEventListener('hashchange', onHashChange)
         onHashChange()
+        missioncatch.value = missionStorage.fetch()
+        checkDate()
+        console.log(localStorage)
+        console.log(missioncatch.value)
+        
     }
 )
 watch(
     todos,
     () => {
-        console.log('watch...')
+        console.log('watch todos...')
         todoStorage.save(todos.value);
     },
     {deep: true}
 )
-
-
-    
-
-
+watch(
+    missioncatch,
+    () => {
+        console.log('watch missioncatch...')
+        missionStorage.save(missioncatch.value);
+        console.log(localStorage)
+    },
+    { deep: true }
+)
 
 
 </script>
