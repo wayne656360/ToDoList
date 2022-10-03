@@ -186,14 +186,15 @@ const missioncatch = ref({
 const emitter = inject("emitter")
 emitter.on('missionvalue', (data) => {
     missioncatch.value.success = data
-    const date = new Date();
-    missioncatch.value.time = date.getTime()
+    //抓完成的『日』00:00的毫秒
+    const date = new Date().toLocaleDateString(); //抓到今天的日
+    missioncatch.value.time = new Date(date).getTime() //抓到今天的日的毫秒
 })
 
 //check mission refresh
 const checkDate = () => {
     const today = new Date();
-    let milliseconds_Time_day = Math.trunc((today.getTime() - missioncatch.value.time) / (1000 * 3600 * 24));
+    let milliseconds_Time_day = Math.trunc((today.getTime() - missioncatch.value.time) / (1000 * 3600 * 24)); //比完成日的00:00多一天
     if (milliseconds_Time_day >= 1){
         missioncatch.value.success = false
         console.log('每日任務重置')
